@@ -13,6 +13,7 @@ const express = require("express");
 const router = express.Router();
 const bodyParser = require("body-parser");
 const jwt= require('jsonwebtoken');
+const { check, validationResult } = require('express-validator');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
 const key = 'c3866e1a47e44afdb7ba4722e53db5cd';
 const endpoint = 'https://koushikkoritala.cognitiveservices.azure.com/';
@@ -63,28 +64,35 @@ const computerVisionClient = new ComputerVisionClient(
 *       '500':
 *         description: Server side error
 */
-router.post('/identifyCeleb',urlencodedParser, async function(req, res){
+router.post('/identifyCeleb',[check('imageUrl').isURL().withMessage('Entered value must be an URL')],urlencodedParser, async function(req, res){
+  const errors = validationResult(req)
+  
     if (req.body) {
         if (req.body.imageUrl) {
-          
+          if (!errors.isEmpty()) {
+            res.send(errors.errors[0].msg)
+          }
           const imageUrl = req.body.imageUrl;
           let caption ;
           try{
            caption = (await computerVisionClient.describeImage(imageUrl)).captions[0];
+           res.status(200).json(caption.text);
           } catch (err) {
-            res.status(err.statusCode).send(err.code);
+            res.status(err.statusCode).send("Invalid Image URL");
             throw err;
-          } finally {
-          res.status(200).json(caption.text);
-          }
+          } 
+          
+          
         }
         else{
-          res.send("Bad request please enter a valid url");
+          res.send("Bad request !!");
       } 
     }
     else{
         res.send("Bad request");
-    }  
+    } 
+  
+  
 });
 
 
@@ -116,33 +124,39 @@ router.post('/identifyCeleb',urlencodedParser, async function(req, res){
 *       '500':
 *         description: Server side error
 */
-router.post('/readText',urlencodedParser, async function(req, res){
+router.post('/readText',[check('imageUrl').isURL().withMessage('Entered value must be an URL')],urlencodedParser, async function(req, res){
+  const errors = validationResult(req)
+  
     if (req.body) {
         if (req.body.imageUrl) {
+          if (!errors.isEmpty()) {
+            res.send(errors.errors[0].msg)
+          }
           const imageUrl = req.body.imageUrl;
           let printedText
           try{
           printedText = (await readTextFromURL(computerVisionClient, imageUrl));
-          }
-          catch (err){
-            res.status(err.statusCode).send(err.code);
-            throw err;
-          } finally {
-            const now = toText(printedText[0].lines)
+          const now = toText(printedText[0].lines)
             if(now.length == 0 )
             res.send("There is no text to read.")
             else{
           res.status(200).json(now);
             }
           }
+          catch (err){
+            res.status(err.statusCode).send("Invalid Image URL");
+            throw err;
+          } 
         }
         else{
-          res.send("Bad request please enter a valid url");
+          res.send("Bad request !!");
       } 
     }
     else{
         res.send("Bad request");
     }  
+  
+  
 });
 
 function toText(out){
@@ -179,32 +193,37 @@ function toText(out){
 *       '500':
 *         description: Server side error
 */
-router.post('/detectBrand',urlencodedParser, async function(req, res){
+router.post('/detectBrand',[check('imageUrl').isURL().withMessage('Entered value must be an URL')],urlencodedParser, async function(req, res){
+  const errors = validationResult(req)
+  
   if (req.body) {
       if (req.body.imageUrl) {
+        if (!errors.isEmpty()) {
+          res.send(errors.errors[0].msg)
+        }
         const imageUrl = req.body.imageUrl;
         let brands;
         try{
         brands = (await computerVisionClient.analyzeImage(imageUrl, { visualFeatures: ['Brands'] })).brands;
-        }
-        catch (err){
-          res.status(err.statusCode).send(err.code);
-          throw err;
-        } finally {
-          const now = listBrands(brands);
+        const now = listBrands(brands);
           if(now.length == 0)
           res.send("No brands were detected.")
           else
         res.status(200).json(now);
         }
+        catch (err){
+          res.status(err.statusCode).send("Invalid Image URL");
+          throw err;
+        } 
       }
       else{
-        res.send("Bad request please enter a valid url");
+        res.send("Bad request !!");
     } 
   }
   else{
       res.send("Bad request");
-  }  
+  } 
+
 });
 
 
@@ -255,32 +274,37 @@ async function readTextFromURL(client, url) {
 *       '500':
 *         description: Server side error
 */
-router.post('/detectObject',urlencodedParser, async function(req, res){
+router.post('/detectObject',[check('imageUrl').isURL().withMessage('Entered value must be an URL')],urlencodedParser, async function(req, res){
+  const errors = validationResult(req)
+  
   if (req.body) {
       if (req.body.imageUrl) {
+        if (!errors.isEmpty()) {
+          res.send(errors.errors[0].msg)
+        }
         const imageUrl = req.body.imageUrl;
         let objects;
         try{
         objects = (await computerVisionClient.analyzeImage(imageUrl, { visualFeatures: ['Objects'] })).objects;
-        }
-        catch (err){
-          res.status(err.statusCode).send(err.code);
-          throw err;
-        } finally {
-          const out = toListOfObjects(objects);
+        const out = toListOfObjects(objects);
             if(out.length == 0)
             res.send("There are no objects in the image.")
             else
         res.status(200).json(out);
         }
+        catch (err){
+          res.status(err.statusCode).send("Invalid Image URL");
+          throw err;
+        } 
       }
       else{
-        res.send("Bad request please enter a valid url");
+        res.send("Bad request !!");
     } 
   }
   else{
       res.send("Bad request");
-  }  
+  } 
+
 });
 
 function toListOfObjects(items){
