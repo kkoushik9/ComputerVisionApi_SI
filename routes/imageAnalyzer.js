@@ -1,3 +1,4 @@
+
 'use strict';
 
 const async = require('async');
@@ -15,8 +16,10 @@ const bodyParser = require("body-parser");
 const jwt= require('jsonwebtoken');
 const { check, validationResult } = require('express-validator');
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
-const key = 'c3866e1a47e44afdb7ba4722e53db5cd';
-const endpoint = 'https://koushikkoritala.cognitiveservices.azure.com/';
+
+const key = process.env.COMPUTER_VISION_KEY;
+const endpoint = process.env.COMPUTER_VISION_ENDPOINT;
+
 
 const computerVisionClient = new ComputerVisionClient(
     new ApiKeyCredentials({ inHeader: { 'Ocp-Apim-Subscription-Key': key } }), endpoint);
